@@ -1,6 +1,6 @@
-import 'package:block/logic/game_controller.dart';
-import 'package:block/models/block.dart';
-import 'package:block/screen/widgets/block_widget.dart';
+import 'package:block/core/constants/game_constants.dart';
+import 'package:block/domain/models/block.dart';
+import 'package:block/presentation/widgets/block_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -90,3 +90,4 @@ class DraggableBlock extends StatelessWidget {
     );
   }
 }
+

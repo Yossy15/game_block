@@ -1,16 +1,24 @@
-import 'package:block/logic/game_controller.dart';
-import 'package:block/models/block.dart';
-import 'package:block/screen/widgets/draggable_block.dart';
-import 'package:block/screen/widgets/score_popup_widget.dart';
+import 'package:block/core/constants/game_constants.dart';
+import 'package:block/domain/models/block.dart';
+import 'package:block/presentation/view_models/game_state.dart';
+import 'package:block/presentation/view_models/game_view_model.dart';
+import 'package:block/presentation/widgets/draggable_block.dart';
+import 'package:block/presentation/widgets/score_popup_widget.dart';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'dart:math' as math;
 
 /// กริด 8x8 ที่รับ Block ด้วย DragTarget เดียวครอบทั้งกริด
 class Display extends StatefulWidget {
-  final GameController controller;
+  final GameState state;
+  final GameViewModel viewModel;
 
-  const Display({super.key, required this.controller});
+  const Display({
+    super.key,
+    required this.state,
+    required this.viewModel,
+  });
 
   @override
   State<Display> createState() => _DisplayState();
@@ -28,7 +36,8 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
 
-  GameController get _ctrl => widget.controller;
+  GameState get _state => widget.state;
+  GameViewModel get _viewModel => widget.viewModel;
 
   @override
   void initState() {
@@ -54,6 +63,8 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
     final renderBox = _gridKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return null;
 
+    // Drag feedback is rendered a bit above the finger, so convert the pointer
+    // position to the visual center of the block before mapping it onto the grid.
     final adjustedGlobalPos = Offset(
       globalPos.dx,
       globalPos.dy + dragVerticalOffset,
@@ -61,8 +72,10 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
     final localPos = renderBox.globalToLocal(adjustedGlobalPos);
     final cellSize = renderBox.size.width / gridSize;
 
-    final startRow = ((localPos.dy / cellSize) - (block.rows / 2)).round();
-    final startCol = ((localPos.dx / cellSize) - (block.cols / 2)).round();
+    final rawRow = ((localPos.dy / cellSize) - (block.rows / 2)).round();
+    final rawCol = ((localPos.dx / cellSize) - (block.cols / 2)).round();
+    final startRow = rawRow.clamp(-block.rows + 1, gridSize - 1);
+    final startCol = rawCol.clamp(-block.cols + 1, gridSize - 1);
 
     return (row: startRow, col: startCol);
   }
@@ -79,7 +92,7 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
       return;
     }
 
-    final canPlace = _ctrl.canPlace(block, pos.row, pos.col);
+    final canPlace = _viewModel.canPlace(block, pos.row, pos.col);
     if (pos.row != _hoverRow ||
         pos.col != _hoverCol ||
         _canPlaceHover != canPlace) {
@@ -95,8 +108,8 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
   void _onAccept(DragTargetDetails<BlockDragData> details) {
     final block = details.data.block;
     final pos = _calcGridPosition(details.offset, block);
-    if (pos != null && _ctrl.canPlace(block, pos.row, pos.col)) {
-      _ctrl.placeBlock(block, pos.row, pos.col, details.data.slotIndex);
+    if (pos != null && _viewModel.canPlace(block, pos.row, pos.col)) {
+      _viewModel.placeBlock(block, pos.row, pos.col, details.data.slotIndex);
     }
     _clearHover();
   }
@@ -142,7 +155,7 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
     for (int r = 0; r < gridSize; r++) {
       bool rowFull = true;
       for (int c = 0; c < gridSize; c++) {
-        if (_ctrl.grid[r][c] == null && !indices.contains(r * gridSize + c)) {
+        if (_state.grid[r][c] == null && !indices.contains(r * gridSize + c)) {
           rowFull = false;
           break;
         }
@@ -153,7 +166,7 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
     for (int c = 0; c < gridSize; c++) {
       bool colFull = true;
       for (int r = 0; r < gridSize; r++) {
-        if (_ctrl.grid[r][c] == null && !indices.contains(r * gridSize + c)) {
+        if (_state.grid[r][c] == null && !indices.contains(r * gridSize + c)) {
           colFull = false;
           break;
         }
@@ -216,17 +229,17 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
                         // 2. Placed cells
                         for (int row = 0; row < gridSize; row++)
                           for (int col = 0; col < gridSize; col++)
-                            if (_ctrl.grid[row][col] != null)
+                            if (_state.grid[row][col] != null)
                               Positioned(
                                 key: ValueKey(
-                                  'pos-$row-$col-${_ctrl.grid[row][col]!.toARGB32()}',
+                                  'pos-$row-$col-${_state.grid[row][col]!.toARGB32()}',
                                 ),
                                 left: col * cellSize,
                                 top: row * cellSize,
                                 width: cellSize,
                                 height: cellSize,
                                 child: AnimatedPlacedCell(
-                                  color: _ctrl.grid[row][col]!,
+                                  color: _state.grid[row][col]!,
                                   isElevated:
                                       hoverInfo.fullRows.contains(row) ||
                                       hoverInfo.fullCols.contains(col),
@@ -234,7 +247,7 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
                               ),
 
                         // 3. Clearing cells
-                        for (final cell in _ctrl.clearingCells)
+                        for (final cell in _state.clearingCells)
                           Positioned(
                             key: ValueKey(
                               'clearing-${cell.row}-${cell.col}-${DateTime.now().millisecondsSinceEpoch}',
@@ -247,7 +260,7 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
                           ),
 
                         // 4. Score Popups
-                        for (final popup in _ctrl.activePopups)
+                        for (final popup in _state.activePopups)
                           Positioned(
                             key: ValueKey('popup-${popup.id}'),
                             left: popup.gridX * cellSize,
@@ -302,12 +315,12 @@ class _BoardContainer extends StatelessWidget {
                 borderRadius: BorderRadius.circular(radius + 2),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF00E5FF).withOpacity(glowOpacity),
+                    color: const Color(0xFF00E5FF).withValues(alpha: glowOpacity),
                     blurRadius: 28,
                     spreadRadius: 3,
                   ),
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.6),
+                    color: Colors.black.withValues(alpha: 0.6),
                     blurRadius: 10,
                     offset: const Offset(0, 5),
                   ),
@@ -331,7 +344,7 @@ class _BoardContainer extends StatelessWidget {
                   border: Border.all(
                     color: const Color(
                       0xFF30D5C8,
-                    ).withOpacity(0.35 + pulseValue * 0.20),
+                    ).withValues(alpha: 0.35 + pulseValue * 0.20),
                     width: 1.5,
                   ),
                 ),
@@ -458,7 +471,7 @@ class _AnimatedClearedCellState extends State<AnimatedClearedCell>
                         borderRadius: BorderRadius.circular(4),
                         boxShadow: [
                           BoxShadow(
-                            color: widget.color.withOpacity(0.8),
+                            color: widget.color.withValues(alpha: 0.8),
                             blurRadius: 10 * (1 - tileT),
                             spreadRadius: 3 * (1 - tileT),
                           ),
@@ -479,7 +492,7 @@ class _AnimatedClearedCellState extends State<AnimatedClearedCell>
                       borderRadius: BorderRadius.circular(5),
                       boxShadow: [
                         BoxShadow(
-                          color: bright.withOpacity(flashOpacity * 0.8),
+                          color: bright.withValues(alpha: flashOpacity * 0.8),
                           blurRadius: 16,
                           spreadRadius: 4,
                         ),
@@ -540,7 +553,7 @@ class _ParticlePainter extends CustomPainter {
           : (i % 3 == 1 ? brightColor : color);
 
       final paint = Paint()
-        ..color = particleColor.withOpacity(opacity * (1.0 - localT * 0.5))
+        ..color = particleColor.withValues(alpha: opacity * (1.0 - localT * 0.5))
         ..style = PaintingStyle.fill;
 
       // วาด particle เป็น rounded square หมุนตาม progress
@@ -605,19 +618,19 @@ class AnimatedPlacedCell extends StatelessWidget {
               boxShadow: [
                 if (isElevated) ...[
                   BoxShadow(
-                    color: color.withOpacity(0.75),
+                    color: color.withValues(alpha: 0.75),
                     blurRadius: 16,
                     spreadRadius: 3,
                     offset: const Offset(0, 3),
                   ),
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.15),
+                    color: Colors.white.withValues(alpha: 0.15),
                     blurRadius: 4,
                     offset: const Offset(-1, -1),
                   ),
                 ] else
                   BoxShadow(
-                    color: dark.withOpacity(0.55),
+                    color: dark.withValues(alpha: 0.55),
                     blurRadius: 4,
                     offset: const Offset(1, 2),
                   ),
@@ -636,8 +649,8 @@ class AnimatedPlacedCell extends StatelessWidget {
                       borderRadius: BorderRadius.circular(3),
                       gradient: LinearGradient(
                         colors: [
-                          Colors.white.withOpacity(0.5),
-                          Colors.white.withOpacity(0.0),
+                          Colors.white.withValues(alpha: 0.5),
+                          Colors.white.withValues(alpha: 0.0),
                         ],
                       ),
                     ),
@@ -693,7 +706,7 @@ class _GridPainter extends CustomPainter {
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.5
-      ..color = _gridLine.withOpacity(lineAlpha);
+      ..color = _gridLine.withValues(alpha: lineAlpha);
 
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize; col++) {
@@ -728,7 +741,7 @@ class _GridPainter extends CustomPainter {
 
     // Outer glow
     final glowPaint = Paint()
-      ..color = color.withOpacity(0.18 + pulseValue * 0.08)
+      ..color = color.withValues(alpha: 0.18 + pulseValue * 0.08)
       ..maskFilter = MaskFilter.blur(BlurStyle.normal, willClear ? 12 : 8);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
@@ -740,7 +753,7 @@ class _GridPainter extends CustomPainter {
 
     // Fill
     final fillPaint = Paint()
-      ..color = color.withOpacity(willClear ? 0.38 : 0.28);
+      ..color = color.withValues(alpha: willClear ? 0.38 : 0.28);
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect.deflate(1.5), const Radius.circular(4)),
       fillPaint,
@@ -750,7 +763,7 @@ class _GridPainter extends CustomPainter {
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = willClear ? 1.5 : 1.0
-      ..color = color.withOpacity(willClear ? 0.85 : 0.55);
+      ..color = color.withValues(alpha: willClear ? 0.85 : 0.55);
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect.deflate(1.5), const Radius.circular(4)),
       borderPaint,
@@ -759,7 +772,7 @@ class _GridPainter extends CustomPainter {
     // ── "Will clear" diagonal hatch lines ─────────────────────────────
     if (willClear) {
       final hatchPaint = Paint()
-        ..color = color.withOpacity(0.18)
+        ..color = color.withValues(alpha: 0.18)
         ..strokeWidth = 1.0;
       const step = 5.0;
       final inner = rect.deflate(1.5);
@@ -781,14 +794,14 @@ class _GridPainter extends CustomPainter {
   void _paintPreClearHint(Canvas canvas, Rect rect) {
     // ไม่ใช่ส่วนของบล็อกที่ลาก แต่แถวนี้จะถูกเคลียร์ — hint เบาๆ
     final hintPaint = Paint()
-      ..color = _neonCyan.withOpacity(0.06 + pulseValue * 0.04);
+      ..color = _neonCyan.withValues(alpha: 0.06 + pulseValue * 0.04);
     canvas.drawRect(rect, hintPaint);
   }
 
   void _paintCornerDots(Canvas canvas, Size size) {
     // มุม 4 ด้านของกระดาน — เป็น decorative accent
     final dotPaint = Paint()
-      ..color = _neonCyan.withOpacity(0.4 + pulseValue * 0.25);
+      ..color = _neonCyan.withValues(alpha: 0.4 + pulseValue * 0.25);
     const r = 3.0;
     final offsets = [
       const Offset(r, r),
@@ -803,7 +816,7 @@ class _GridPainter extends CustomPainter {
     // Scan line ตัดขวางกระดาน (เคลื่อนช้าๆ ตาม pulse)
     final scanY = size.height * pulseValue;
     final scanPaint = Paint()
-      ..color = _neonCyan.withOpacity(0.04)
+      ..color = _neonCyan.withValues(alpha: 0.04)
       ..strokeWidth = 1.5;
     canvas.drawLine(Offset(0, scanY), Offset(size.width, scanY), scanPaint);
   }
@@ -838,3 +851,5 @@ class HoverInfo {
   @override
   int get hashCode => indices.hashCode ^ fullRows.hashCode ^ fullCols.hashCode;
 }
+
+

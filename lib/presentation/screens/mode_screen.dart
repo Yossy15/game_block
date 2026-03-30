@@ -1,18 +1,18 @@
 import 'dart:math';
 
-import 'package:block/screen/home.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 
-class Mode extends StatefulWidget {
-  const Mode({super.key});
+class ModeScreen extends StatefulWidget {
+  const ModeScreen({super.key});
 
   @override
-  State<Mode> createState() => _ModeState();
+  State<ModeScreen> createState() => _ModeScreenState();
 }
 
-class _ModeState extends State<Mode> with TickerProviderStateMixin {
+class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
   late AnimationController _particleController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -74,15 +74,9 @@ class _ModeState extends State<Mode> with TickerProviderStateMixin {
   }
 
   void _goToHome(BuildContext context, {bool isTimerMode = false}) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (_, a, __) => Home(isTimerMode: isTimerMode),
-        transitionsBuilder: (_, anim, __, child) {
-          return FadeTransition(opacity: anim, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 400),
-      ),
+    context.pushNamed(
+      'game',
+      queryParameters: {'timerMode': isTimerMode.toString()},
     );
   }
 
@@ -143,7 +137,7 @@ class _ModeState extends State<Mode> with TickerProviderStateMixin {
                               style: TextStyle(
                                 fontSize: 11,
                                 letterSpacing: 5,
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha: 0.3),
                                 fontFamily: 'monospace',
                                 decoration: TextDecoration.none,
                               ),
@@ -246,10 +240,10 @@ class _ModeState extends State<Mode> with TickerProviderStateMixin {
                                       label: 'BATTER\n(Online)',
                                       badge: 'CHALLENGE',
                                       description:
-                                          'Race the clock\nBeat your best',
-                                      icon: Icons.timer_rounded,
+                                          'Create room\nJoin by code',
+                                      icon: Icons.wifi_tethering_rounded,
                                       accentColor: const Color(0xFFFF6B2F),
-                                      onTap: () {},
+                                      onTap: () => context.pushNamed('online-room'),
                                     ),
                                   ),
                                 ),
@@ -269,7 +263,7 @@ class _ModeState extends State<Mode> with TickerProviderStateMixin {
                           style: TextStyle(
                             fontSize: 11,
                             letterSpacing: 2,
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                             fontFamily: 'monospace',
                             decoration: TextDecoration.none,
                           ),
@@ -293,7 +287,7 @@ class _ModeState extends State<Mode> with TickerProviderStateMixin {
         backgroundColor: const Color(0xFF1A0A2E),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withOpacity(0.1)),
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         title: const Text(
           'Exit Game',
@@ -401,21 +395,19 @@ class _ModeCardState extends State<_ModeCard>
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
             decoration: BoxDecoration(
               color: _hovered
-                  ? widget.accentColor.withOpacity(0.12)
-                  : Colors.white.withOpacity(0.04),
+                  ? widget.accentColor.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _hovered
-                    ? widget.accentColor.withOpacity(0.8)
-                    : widget.accentColor.withOpacity(
-                        0.6,
-                      ), // เพิ่มความสว่างนีออนแม้ไม่ hover
+                    ? widget.accentColor.withValues(alpha: 0.8)
+                    : widget.accentColor.withValues(alpha: 0.6), // เพิ่มความสว่างนีออนแม้ไม่ hover
                 width: 1.5,
               ),
               boxShadow: _hovered
                   ? [
                       BoxShadow(
-                        color: widget.accentColor.withOpacity(0.18),
+                        color: widget.accentColor.withValues(alpha: 0.18),
                         blurRadius: 30,
                         spreadRadius: 2,
                       ),
@@ -433,12 +425,10 @@ class _ModeCardState extends State<_ModeCard>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: widget.accentColor.withOpacity(0.15),
+                    color: widget.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: widget.accentColor.withOpacity(
-                        _hovered ? 0.5 : 0.25,
-                      ),
+                      color: widget.accentColor.withValues(alpha: _hovered ? 0.5 : 0.25),
                     ),
                   ),
                   child: Text(
@@ -447,9 +437,7 @@ class _ModeCardState extends State<_ModeCard>
                       fontSize: 9,
                       letterSpacing: 2,
                       fontWeight: FontWeight.w700,
-                      color: widget.accentColor.withOpacity(
-                        _hovered ? 1.0 : 0.75,
-                      ),
+                      color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.75),
                       fontFamily: 'monospace',
                       decoration: TextDecoration.none,
                     ),
@@ -465,19 +453,15 @@ class _ModeCardState extends State<_ModeCard>
                   height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: widget.accentColor.withOpacity(
-                      _hovered ? 0.3 : 0.12,
-                    ),
+                    color: widget.accentColor.withValues(alpha: _hovered ? 0.3 : 0.12),
                     border: Border.all(
-                      color: widget.accentColor.withOpacity(
-                        _hovered ? 0.9 : 0.7,
-                      ),
+                      color: widget.accentColor.withValues(alpha: _hovered ? 0.9 : 0.7),
                       width: 1.8,
                     ),
                     boxShadow: _hovered
                         ? [
                             BoxShadow(
-                              color: widget.accentColor.withOpacity(0.3),
+                              color: widget.accentColor.withValues(alpha: 0.3),
                               blurRadius: 20,
                               spreadRadius: 2,
                             ),
@@ -486,7 +470,7 @@ class _ModeCardState extends State<_ModeCard>
                   ),
                   child: Icon(
                     widget.icon,
-                    color: widget.accentColor.withOpacity(_hovered ? 1.0 : 0.8),
+                    color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.8),
                     size: 26,
                   ),
                 ),
@@ -517,7 +501,7 @@ class _ModeCardState extends State<_ModeCard>
                     fontSize: 10,
                     height: 1.7,
                     letterSpacing: 0.5,
-                    color: Colors.white.withOpacity(0.38),
+                    color: Colors.white.withValues(alpha: 0.38),
                     decoration: TextDecoration.none,
                     fontFamily: 'monospace',
                   ),
@@ -532,9 +516,7 @@ class _ModeCardState extends State<_ModeCard>
                   children: [
                     Icon(
                       Icons.play_arrow_rounded,
-                      color: widget.accentColor.withOpacity(
-                        _hovered ? 1.0 : 0.6,
-                      ),
+                      color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.6),
                       size: 18,
                     ),
                     const Gap(4),
@@ -544,9 +526,7 @@ class _ModeCardState extends State<_ModeCard>
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 3,
-                        color: widget.accentColor.withOpacity(
-                          _hovered ? 1.0 : 0.6,
-                        ),
+                        color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.6),
                         decoration: TextDecoration.none,
                         fontFamily: 'monospace',
                       ),
@@ -568,7 +548,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
+      ..color = Colors.white.withValues(alpha: 0.03)
       ..strokeWidth = 1;
 
     const step = 36.0;
@@ -612,8 +592,8 @@ class _ParticlePainter extends CustomPainter {
 
       final paint = Paint()
         ..color = p.isOrange
-            ? const Color(0xFFFF6B2F).withOpacity(opacity)
-            : const Color(0xFF7B2FFF).withOpacity(opacity)
+            ? const Color(0xFFFF6B2F).withValues(alpha: opacity)
+            : const Color(0xFF7B2FFF).withValues(alpha: opacity)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
       canvas.drawCircle(
@@ -640,3 +620,6 @@ class _Particle {
     required this.isOrange,
   });
 }
+
+
+

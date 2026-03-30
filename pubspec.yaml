@@ -40,6 +40,15 @@ dependencies:
   animated_digit: ^3.3.2
   shared_preferences: ^2.5.5
   flutter_launcher_icons: ^0.13.1
+  audioplayers: ^6.1.1
+  flutter_riverpod: ^2.6.1
+  riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+  dio: ^5.8.0+1
+  go_router: ^17.1.0
+  socket_io_client: ^3.1.4
+  google_fonts: ^8.0.2
+  toastification: ^3.0.3
 
 flutter_launcher_icons:
   android: true
@@ -49,6 +58,9 @@ flutter_launcher_icons:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  build_runner: ^2.4.15
+  riverpod_generator: ^2.6.5
+  flutter_gen_runner: ^5.10.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -74,6 +86,11 @@ flutter:
     - assets/images/
     - assets/logo/
     - assets/logo/icon.png
+    - assets/sounds/
+
+flutter_gen:
+  output: lib/gen/
+  line_length: 100
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

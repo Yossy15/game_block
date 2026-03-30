@@ -1,6 +1,7 @@
-import 'package:block/logic/game_controller.dart';
-import 'package:flutter/material.dart';
 import 'dart:math' as math;
+
+import 'package:block/presentation/view_models/game_state.dart';
+import 'package:flutter/material.dart';
 
 class ScorePopupWidget extends StatelessWidget {
   final ScorePopup popup;
@@ -146,7 +147,7 @@ class _ComboBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.last.withOpacity(0.6),
+            color: gradientColors.last.withValues(alpha: 0.6),
             blurRadius: 10,
             spreadRadius: 1,
           ),
@@ -198,8 +199,8 @@ class _TierLabel extends StatelessWidget {
         letterSpacing: 2.0,
         decoration: TextDecoration.none,
         shadows: [
-          Shadow(color: tier.glow.withOpacity(0.9), blurRadius: 8),
-          Shadow(color: tier.glow.withOpacity(0.5), blurRadius: 16),
+          Shadow(color: tier.glow.withValues(alpha: 0.9), blurRadius: 8),
+          Shadow(color: tier.glow.withValues(alpha: 0.5), blurRadius: 16),
         ],
       ),
     );
@@ -232,7 +233,7 @@ class _ScoreText extends StatelessWidget {
             fontSize: fontSize,
             fontWeight: FontWeight.w900,
             foreground: Paint()
-              ..color = tier.glow.withOpacity(0.7)
+              ..color = tier.glow.withValues(alpha: 0.7)
               ..maskFilter = MaskFilter.blur(BlurStyle.normal, tier.glowRadius),
             decoration: TextDecoration.none,
           ),
@@ -246,7 +247,7 @@ class _ScoreText extends StatelessWidget {
             foreground: Paint()
               ..style = PaintingStyle.stroke
               ..strokeWidth = 2.5
-              ..color = Colors.black.withOpacity(0.35),
+              ..color = Colors.black.withValues(alpha: 0.35),
             decoration: TextDecoration.none,
           ),
         ),
@@ -292,3 +293,5 @@ class _ScoreTier {
     required this.glowRadius,
   });
 }
+
+

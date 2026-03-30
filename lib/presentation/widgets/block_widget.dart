@@ -1,4 +1,4 @@
-import 'package:block/models/block.dart';
+import 'package:block/domain/models/block.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -205,3 +205,4 @@ class _NeonCell extends StatelessWidget {
     );
   }
 }
+

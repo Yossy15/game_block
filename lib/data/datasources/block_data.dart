@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:block/models/block.dart';
+import 'package:block/domain/models/block.dart';
 import 'package:flutter/material.dart';
 
 final List<Block> blockShapes = [
@@ -500,7 +500,7 @@ final List<Block> blockShapes = [
       [1, 1, 1],
       [1, 1, 1],
     ],
-    color: const Color(0xFF111827),
+    color: const Color(0xFFE2E2E2),
   ),
 
   // ■■■ 3x3 hollow (frame)
@@ -512,7 +512,7 @@ final List<Block> blockShapes = [
       [1, 0, 1],
       [1, 1, 1],
     ],
-    color: const Color(0xFF1F2937),
+    color: const Color(0xFFA1A1A1),
   ),
 
   // ■   Big L (3 tall)
@@ -676,3 +676,4 @@ Block getRandomBlock() {
     return bigBlocks[_random.nextInt(bigBlocks.length)];
   }
 }
+

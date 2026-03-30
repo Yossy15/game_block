@@ -1,8 +1,7 @@
 import 'dart:math';
 
-import 'package:block/screen/home.dart';
-// Removed unused import
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
 import 'package:zo_animated_border/zo_animated_border.dart';
 
@@ -111,8 +110,7 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        // Return to the first route (Mode screen) when system back is pressed
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        context.goNamed('mode');
       },
       child: FadeTransition(
         opacity: _fadeAnim,
@@ -177,7 +175,7 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
                             style: TextStyle(
                               fontSize: 11,
                               letterSpacing: 4,
-                              color: Colors.white.withOpacity(0.35),
+                              color: Colors.white.withValues(alpha: 0.35),
                               fontFamily: 'monospace',
                               decoration: TextDecoration.none,
                             ),
@@ -286,7 +284,7 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
                         style: TextStyle(
                           fontSize: 11,
                           letterSpacing: 2,
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           fontFamily: 'monospace',
                           decoration: TextDecoration.none,
                         ),
@@ -327,7 +325,7 @@ class _GlitchText extends StatelessWidget {
               fontSize: 52,
               fontWeight: FontWeight.w900,
               letterSpacing: 6,
-              color: const Color(0xFFFF2060).withOpacity(0.6),
+              color: const Color(0xFFFF2060).withValues(alpha: 0.6),
               decoration: TextDecoration.none,
               fontFamily: 'monospace',
             ),
@@ -342,7 +340,7 @@ class _GlitchText extends StatelessWidget {
               fontSize: 52,
               fontWeight: FontWeight.w900,
               letterSpacing: 6,
-              color: const Color(0xFF00FFFF).withOpacity(0.4),
+              color: const Color(0xFF00FFFF).withValues(alpha: 0.4),
               decoration: TextDecoration.none,
               fontFamily: 'monospace',
             ),
@@ -385,18 +383,18 @@ class _ScoreCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: highlight
-              ? accent.withOpacity(0.7)
-              : Colors.white.withOpacity(0.08),
+              ? accent.withValues(alpha: 0.7)
+              : Colors.white.withValues(alpha: 0.08),
           width: highlight ? 1.5 : 1,
         ),
         boxShadow: highlight
             ? [
                 BoxShadow(
-                  color: accent.withOpacity(0.25),
+                  color: accent.withValues(alpha: 0.25),
                   blurRadius: 24,
                   spreadRadius: 2,
                 ),
@@ -411,7 +409,7 @@ class _ScoreCard extends StatelessWidget {
               fontSize: 10,
               letterSpacing: 3,
               fontWeight: FontWeight.w600,
-              color: accent.withOpacity(0.8),
+              color: accent.withValues(alpha: 0.8),
               decoration: TextDecoration.none,
               fontFamily: 'monospace',
             ),
@@ -469,8 +467,8 @@ class _NewBestBadgeState extends State<_NewBestBadge>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                const Color(0xFFFF6B2F).withOpacity(0.15 + _ctrl.value * 0.1),
-                const Color(0xFFFFD700).withOpacity(0.15 + _ctrl.value * 0.1),
+                const Color(0xFFFF6B2F).withValues(alpha: 0.15 + _ctrl.value * 0.1),
+                const Color(0xFFFFD700).withValues(alpha: 0.15 + _ctrl.value * 0.1),
               ],
             ),
             borderRadius: BorderRadius.circular(20),
@@ -479,7 +477,7 @@ class _NewBestBadgeState extends State<_NewBestBadge>
                 const Color(0xFFFF6B2F),
                 const Color(0xFFFFD700),
                 _ctrl.value,
-              )!.withOpacity(0.6),
+              )!.withValues(alpha: 0.6),
             ),
           ),
           child: Row(
@@ -641,8 +639,7 @@ class _HomeButtonState extends State<_HomeButton>
       onTap: () {
         _ctrl.forward();
         _ctrl.reverse();
-        // Return to the first route (Mode screen)
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        context.goNamed('mode');
       },
       child: ScaleTransition(
         scale: _scale,
@@ -686,7 +683,7 @@ class _DotDivider extends StatelessWidget {
       width: 4,
       height: 4,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         shape: BoxShape.circle,
       ),
     );
@@ -699,7 +696,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
+      ..color = Colors.white.withValues(alpha: 0.03)
       ..strokeWidth = 1;
 
     const step = 40.0;
@@ -742,7 +739,7 @@ class _ParticlePainter extends CustomPainter {
       final opacity = (sin(t * pi) * 0.5).clamp(0.0, 0.5);
 
       final paint = Paint()
-        ..color = const Color(0xFF7B2FFF).withOpacity(opacity)
+        ..color = const Color(0xFF7B2FFF).withValues(alpha: opacity)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
 
       canvas.drawCircle(
@@ -767,3 +764,6 @@ class _Particle {
     required this.phase,
   });
 }
+
+
+
