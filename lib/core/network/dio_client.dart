@@ -4,7 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'dio_client.g.dart';
 
-const apiBaseUrlOld = 'https://socket-production-66ed.up.railway.app';
+//const apiBaseUrlOld = 'https://socket-production-66ed.up.railway.app';
 
 const apiBaseUrl = 'https://socket-x98z.onrender.com';
 
