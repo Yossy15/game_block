@@ -2,12 +2,11 @@ import 'package:block/core/constants/game_constants.dart';
 import 'package:block/domain/models/block.dart';
 import 'package:block/presentation/view_models/game_state.dart';
 import 'package:block/presentation/view_models/game_view_model.dart';
+import 'package:block/presentation/view_models/skin_provider.dart';
 import 'package:block/presentation/widgets/draggable_block.dart';
 import 'package:block/presentation/widgets/score_popup_widget.dart';
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// กริด 8x8 ที่รับ Block ด้วย DragTarget เดียวครอบทั้งกริด
 class Display extends StatefulWidget {
@@ -250,7 +249,7 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
                         for (final cell in _state.clearingCells)
                           Positioned(
                             key: ValueKey(
-                              'clearing-${cell.row}-${cell.col}-${DateTime.now().millisecondsSinceEpoch}',
+                              'clearing-${cell.row}-${cell.col}',
                             ),
                             left: cell.col * cellSize,
                             top: cell.row * cellSize,
@@ -288,7 +287,7 @@ class _DisplayState extends State<Display> with SingleTickerProviderStateMixin {
 // =============================================================================
 class _BoardContainer extends StatelessWidget {
   final double size;
-  final double pulseValue; // 0.0–1.0 for border glow pulse
+  final double pulseValue; // 0.0–1.0 (Kept for compatibility, but ignored in minimal design)
   final Widget child;
 
   const _BoardContainer({
@@ -299,288 +298,58 @@ class _BoardContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glowOpacity = 0.25 + pulseValue * 0.18;
     const double radius = 12.0;
 
-    return SizedBox(
+    return Container(
       width: size,
       height: size,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // ── Glow shadow (ไม่กินพื้นที่ของ content) ─────────────────────
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(radius + 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF00E5FF).withValues(alpha: glowOpacity),
-                    blurRadius: 28,
-                    spreadRadius: 3,
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.6),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-            ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
           ),
-
-          // ── Content: ขนาด size × size เป๊ะ ─────────────────────────────
-          ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: SizedBox(width: size, height: size, child: child),
-          ),
-
-          // ── Neon border วาดทับ (foreground, IgnorePointer) ──────────────
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(radius),
-                  border: Border.all(
-                    color: const Color(
-                      0xFF30D5C8,
-                    ).withValues(alpha: 0.35 + pulseValue * 0.20),
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(
+          color: const Color(0xFFE5E7EB), // subtle gray border
+          width: 1.5,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(radius - 1.5),
+        child: child,
       ),
     );
   }
 }
 
 // =============================================================================
-// AnimatedClearedCell — 3-phase: flash → shatter → particles dissolve
+// AnimatedClearedCell — delegates to current skin's clearCellBuilder
 // =============================================================================
-class AnimatedClearedCell extends StatefulWidget {
+class AnimatedClearedCell extends ConsumerWidget {
   final Color color;
   const AnimatedClearedCell({super.key, required this.color});
 
   @override
-  State<AnimatedClearedCell> createState() => _AnimatedClearedCellState();
-}
-
-class _AnimatedClearedCellState extends State<AnimatedClearedCell>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
-  // ── Phase timings (ทั้งหมด 600ms) ─────────────────────────────────────
-  // 0.00–0.15 : white flash
-  // 0.05–0.45 : tile scale down + shimmer
-  // 0.20–1.00 : 8 particles ระเบิดออก + fade
-  static const _totalMs = 600;
-
-  // Particle directions (8 ทิศ)
-  static const _particleDirs = [
-    Offset(0, -1), // N
-    Offset(0.7, -0.7), // NE
-    Offset(1, 0), // E
-    Offset(0.7, 0.7), // SE
-    Offset(0, 1), // S
-    Offset(-0.7, 0.7), // SW
-    Offset(-1, 0), // W
-    Offset(-0.7, -0.7), // NW
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: _totalMs),
-    )..forward();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final skin = ref.watch(skinNotifierProvider);
+    return skin.clearCellBuilder(color);
   }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final HSLColor hsl = HSLColor.fromColor(widget.color);
-    final Color bright = hsl
-        .withLightness((hsl.lightness + 0.3).clamp(0.0, 1.0))
-        .withSaturation((hsl.saturation + 0.2).clamp(0.0, 1.0))
-        .toColor();
-
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, _) {
-        final t = _ctrl.value; // 0.0 → 1.0
-
-        // ── Phase 1: white flash (0–0.15) ─────────────────────────────
-        final flashT = (t / 0.15).clamp(0.0, 1.0);
-        final flashOpacity = flashT < 0.4
-            ? flashT /
-                  0.4 // ramp up
-            : 1.0 - (flashT - 0.4) / 0.6; // ramp down
-
-        // ── Phase 2: tile (0.05–0.50) ─────────────────────────────────
-        final tileT = ((t - 0.05) / 0.45).clamp(0.0, 1.0);
-        final tileScale = 1.0 - _easeInCubic(tileT);
-        final tileOpacity = tileT < 0.6 ? 1.0 : 1.0 - (tileT - 0.6) / 0.4;
-
-        // ── Phase 3: particles (0.20–1.00) ────────────────────────────
-        final partT = ((t - 0.20) / 0.80).clamp(0.0, 1.0);
-        final particleProgress = _easeOutCubic(partT);
-        final particleOpacity = partT < 0.5 ? 1.0 : 1.0 - (partT - 0.5) / 0.5;
-
-        return SizedBox.expand(
-          child: Stack(
-            alignment: Alignment.center,
-            clipBehavior: Clip.none,
-            children: [
-              // ── Particles ──────────────────────────────────────────
-              if (partT > 0)
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _ParticlePainter(
-                      color: widget.color,
-                      brightColor: bright,
-                      directions: _particleDirs,
-                      progress: particleProgress,
-                      opacity: particleOpacity,
-                    ),
-                  ),
-                ),
-
-              // ── Tile (main block) ───────────────────────────────────
-              if (tileScale > 0)
-                Opacity(
-                  opacity: tileOpacity.clamp(0.0, 1.0),
-                  child: Transform.scale(
-                    scale: tileScale.clamp(0.0, 1.0),
-                    child: Container(
-                      margin: const EdgeInsets.all(1.5),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [bright, widget.color],
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: widget.color.withValues(alpha: 0.8),
-                            blurRadius: 10 * (1 - tileT),
-                            spreadRadius: 3 * (1 - tileT),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-              // ── White flash overlay ─────────────────────────────────
-              if (flashOpacity > 0.01)
-                Opacity(
-                  opacity: flashOpacity.clamp(0.0, 1.0),
-                  child: Container(
-                    margin: const EdgeInsets.all(1.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: bright.withValues(alpha: flashOpacity * 0.8),
-                          blurRadius: 16,
-                          spreadRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  static double _easeInCubic(double t) => t * t * t;
-  static double _easeOutCubic(double t) => 1 - math.pow(1 - t, 3).toDouble();
-}
-
-// ── Particle painter ────────────────────────────────────────────────────────
-class _ParticlePainter extends CustomPainter {
-  final Color color;
-  final Color brightColor;
-  final List<Offset> directions;
-  final double progress; // 0→1 eased
-  final double opacity;
-
-  const _ParticlePainter({
-    required this.color,
-    required this.brightColor,
-    required this.directions,
-    required this.progress,
-    required this.opacity,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final maxRadius = size.width * 0.72; // ระยะสูงสุดที่ particle จะบินไป
-
-    for (int i = 0; i < directions.length; i++) {
-      final dir = directions[i];
-
-      // สลับขนาด particle เล็ก/ใหญ่ตาม index
-      final isLarge = i % 2 == 0;
-      final pSize = isLarge ? size.width * 0.13 : size.width * 0.08;
-
-      // stagger เล็กน้อย particle คู่ออกก่อน
-      final stagger = isLarge ? 0.0 : 0.06;
-      final localT = ((progress - stagger) / (1.0 - stagger)).clamp(0.0, 1.0);
-      if (localT <= 0) continue;
-
-      final dist = maxRadius * localT;
-      final pos = center + dir * dist;
-
-      // particle สีสลับระหว่าง bright และ color
-      final particleColor = i % 3 == 0
-          ? Colors.white
-          : (i % 3 == 1 ? brightColor : color);
-
-      final paint = Paint()
-        ..color = particleColor.withValues(alpha: opacity * (1.0 - localT * 0.5))
-        ..style = PaintingStyle.fill;
-
-      // วาด particle เป็น rounded square หมุนตาม progress
-      canvas.save();
-      canvas.translate(pos.dx, pos.dy);
-      canvas.rotate(progress * math.pi * (isLarge ? 1.5 : -2.0) + i);
-      final half = pSize / 2;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTRB(-half, -half, half, half),
-          Radius.circular(pSize * 0.25),
-        ),
-        paint,
-      );
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ParticlePainter old) =>
-      old.progress != progress || old.opacity != opacity;
 }
 
 // =============================================================================
-// AnimatedPlacedCell — glossy tile with top-light sheen
+// AnimatedPlacedCell — delegates to current skin's placedCellBuilder
 // =============================================================================
-class AnimatedPlacedCell extends StatelessWidget {
+class AnimatedPlacedCell extends ConsumerWidget {
   final Color color;
   final bool isElevated;
 
@@ -591,83 +360,15 @@ class AnimatedPlacedCell extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Derive lighter/darker shades for depth
-    final HSLColor hsl = HSLColor.fromColor(color);
-    final Color light = hsl
-        .withLightness((hsl.lightness + 0.22).clamp(0.0, 1.0))
-        .toColor();
-    final Color dark = hsl
-        .withLightness((hsl.lightness - 0.18).clamp(0.0, 1.0))
-        .toColor();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final skin = ref.watch(skinNotifierProvider);
 
-    return AnimatedScale(
-          scale: isElevated ? 1.09 : 1.0,
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutBack,
-          child: Container(
-            margin: const EdgeInsets.all(1.5),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [light, color, dark],
-                stops: const [0.0, 0.45, 1.0],
-              ),
-              borderRadius: BorderRadius.circular(5),
-              boxShadow: [
-                if (isElevated) ...[
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.75),
-                    blurRadius: 16,
-                    spreadRadius: 3,
-                    offset: const Offset(0, 3),
-                  ),
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    blurRadius: 4,
-                    offset: const Offset(-1, -1),
-                  ),
-                ] else
-                  BoxShadow(
-                    color: dark.withValues(alpha: 0.55),
-                    blurRadius: 4,
-                    offset: const Offset(1, 2),
-                  ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                // Top-left gloss sheen
-                Positioned(
-                  top: 1,
-                  left: 2,
-                  right: 8,
-                  height: 5,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(3),
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: 0.5),
-                          Colors.white.withValues(alpha: 0.0),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        )
-        .animate()
-        .scaleXY(
-          begin: 0.4,
-          end: 1.0,
-          duration: 380.ms,
-          curve: Curves.easeOutBack,
-        )
-        .fadeIn(duration: 180.ms);
+    return skin.animatePlacedCell(
+      skin.placedCellBuilder(
+        color: color,
+        isElevated: isElevated,
+      ),
+    );
   }
 }
 
@@ -679,7 +380,7 @@ class _GridPainter extends CustomPainter {
   final HoverInfo hoverInfo;
   final bool canPlace;
   final Color? hoverColor;
-  final double pulseValue;
+  final double pulseValue; // Kept for interface compatibility but ignored
 
   _GridPainter({
     required this.cellSize,
@@ -690,23 +391,21 @@ class _GridPainter extends CustomPainter {
   });
 
   // ── Palette ──────────────────────────────────────────────────────────────
-  static const Color _bgEven = Color(0xFF0D1117);
-  static const Color _bgOdd = Color(0xFF111820);
-  static const Color _gridLine = Color(0xFF1E3A4A);
-  static const Color _neonCyan = Color(0xFF00E5FF);
-  static const Color _neonRed = Color(0xFFFF2D78);
+  static const Color _bgEven = Color(0xFFFAFAFA);
+  static const Color _bgOdd = Color(0xFFF4F4F5);
+  static const Color _gridLine = Color(0xFFE5E7EB);
+  static const Color _accentBlue = Color(0xFF3B82F6);
+  static const Color _accentRed = Color(0xFFEF4444);
 
   @override
   void paint(Canvas canvas, Size size) {
     final evenFill = Paint()..color = _bgEven;
     final oddFill = Paint()..color = _bgOdd;
 
-    // ── Grid line paint (pulse brightness) ──────────────────────────────
-    final lineAlpha = 0.3 + pulseValue * 0.12;
     final linePaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.5
-      ..color = _gridLine.withValues(alpha: lineAlpha);
+      ..strokeWidth = 1.0
+      ..color = _gridLine;
 
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize; col++) {
@@ -731,29 +430,14 @@ class _GridPainter extends CustomPainter {
         }
       }
     }
-
-    // ── Corner accent dots ──────────────────────────────────────────────
-    _paintCornerDots(canvas, size);
   }
 
   void _paintHoverCell(Canvas canvas, Rect rect, bool willClear) {
-    final color = canPlace ? _neonCyan : _neonRed;
-
-    // Outer glow
-    final glowPaint = Paint()
-      ..color = color.withValues(alpha: 0.18 + pulseValue * 0.08)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, willClear ? 12 : 8);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        rect.inflate(willClear ? 3 : 1.5),
-        const Radius.circular(5),
-      ),
-      glowPaint,
-    );
+    final color = canPlace ? _accentBlue : _accentRed;
 
     // Fill
     final fillPaint = Paint()
-      ..color = color.withValues(alpha: willClear ? 0.38 : 0.28);
+      ..color = color.withValues(alpha: willClear ? 0.4 : 0.2);
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect.deflate(1.5), const Radius.circular(4)),
       fillPaint,
@@ -762,8 +446,8 @@ class _GridPainter extends CustomPainter {
     // Border accent
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = willClear ? 1.5 : 1.0
-      ..color = color.withValues(alpha: willClear ? 0.85 : 0.55);
+      ..strokeWidth = 2.0
+      ..color = color.withValues(alpha: 0.8);
     canvas.drawRRect(
       RRect.fromRectAndRadius(rect.deflate(1.5), const Radius.circular(4)),
       borderPaint,
@@ -772,9 +456,9 @@ class _GridPainter extends CustomPainter {
     // ── "Will clear" diagonal hatch lines ─────────────────────────────
     if (willClear) {
       final hatchPaint = Paint()
-        ..color = color.withValues(alpha: 0.18)
-        ..strokeWidth = 1.0;
-      const step = 5.0;
+        ..color = color.withValues(alpha: 0.3)
+        ..strokeWidth = 1.5;
+      const step = 6.0;
       final inner = rect.deflate(1.5);
       canvas.save();
       canvas.clipRRect(
@@ -792,41 +476,16 @@ class _GridPainter extends CustomPainter {
   }
 
   void _paintPreClearHint(Canvas canvas, Rect rect) {
-    // ไม่ใช่ส่วนของบล็อกที่ลาก แต่แถวนี้จะถูกเคลียร์ — hint เบาๆ
     final hintPaint = Paint()
-      ..color = _neonCyan.withValues(alpha: 0.06 + pulseValue * 0.04);
+      ..color = _accentBlue.withValues(alpha: 0.08);
     canvas.drawRect(rect, hintPaint);
-  }
-
-  void _paintCornerDots(Canvas canvas, Size size) {
-    // มุม 4 ด้านของกระดาน — เป็น decorative accent
-    final dotPaint = Paint()
-      ..color = _neonCyan.withValues(alpha: 0.4 + pulseValue * 0.25);
-    const r = 3.0;
-    final offsets = [
-      const Offset(r, r),
-      Offset(size.width - r, r),
-      Offset(r, size.height - r),
-      Offset(size.width - r, size.height - r),
-    ];
-    for (final o in offsets) {
-      canvas.drawCircle(o, r, dotPaint);
-    }
-
-    // Scan line ตัดขวางกระดาน (เคลื่อนช้าๆ ตาม pulse)
-    final scanY = size.height * pulseValue;
-    final scanPaint = Paint()
-      ..color = _neonCyan.withValues(alpha: 0.04)
-      ..strokeWidth = 1.5;
-    canvas.drawLine(Offset(0, scanY), Offset(size.width, scanY), scanPaint);
   }
 
   @override
   bool shouldRepaint(covariant _GridPainter old) =>
       old.hoverInfo != hoverInfo ||
       old.canPlace != canPlace ||
-      old.hoverColor != hoverColor ||
-      (old.pulseValue - pulseValue).abs() > 0.005;
+      old.hoverColor != hoverColor;
 }
 
 // =============================================================================

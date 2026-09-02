@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:gap/gap.dart';
-import 'package:zo_animated_border/zo_animated_border.dart';
 
 class GameOver extends StatefulWidget {
   const GameOver({
@@ -25,14 +22,11 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late AnimationController _scaleController;
-  late AnimationController _glitchController;
-  late AnimationController _particleController;
 
   late Animation<double> _fadeAnim;
   late Animation<Offset> _titleSlide;
   late Animation<Offset> _cardSlide;
   late Animation<double> _scaleAnim;
-  late Animation<double> _glitchAnim;
 
   bool _isNewBest = false;
 
@@ -57,16 +51,6 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 500),
     );
 
-    _glitchController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 80),
-    )..repeat(reverse: true);
-
-    _particleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    )..repeat();
-
     _fadeAnim = CurvedAnimation(parent: _fadeController, curve: Curves.easeOut);
     _titleSlide = Tween<Offset>(begin: const Offset(0, -0.3), end: Offset.zero)
         .animate(
@@ -82,10 +66,6 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
     _scaleAnim = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
-    _glitchAnim = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(_glitchController);
 
     Future.delayed(const Duration(milliseconds: 100), () {
       _fadeController.forward();
@@ -99,8 +79,6 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
     _fadeController.dispose();
     _slideController.dispose();
     _scaleController.dispose();
-    _glitchController.dispose();
-    _particleController.dispose();
     super.dispose();
   }
 
@@ -115,250 +93,139 @@ class _GameOverState extends State<GameOver> with TickerProviderStateMixin {
       child: FadeTransition(
         opacity: _fadeAnim,
         child: Container(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, -0.3),
-              radius: 1.4,
-              colors: [Color(0xFF1A0A2E), Color(0xFF0D0118), Color(0xFF050008)],
-            ),
-          ),
-          child: Stack(
-            children: [
-              // Background grid lines
-              Positioned.fill(child: CustomPaint(painter: _GridPainter())),
+          color: const Color(0xFFF9FAFB),
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Gap(20),
 
-              // Floating particles
-              Positioned.fill(
-                child: AnimatedBuilder(
-                  animation: _particleController,
-                  builder: (context, _) {
-                    return CustomPaint(
-                      painter: _ParticlePainter(_particleController.value),
-                    );
-                  },
+                // GAME OVER title
+                SlideTransition(
+                  position: _titleSlide,
+                  child: const Text(
+                    'GAME OVER',
+                    style: TextStyle(
+                      fontSize: 52,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 6,
+                      color: Color(0xFF111827),
+                      decoration: TextDecoration.none,
+                      fontFamily: 'sans-serif',
+                    ),
+                  ),
                 ),
-              ),
 
-              // Main content
-              SafeArea(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Gap(20),
+                const Gap(8),
 
-                    // GAME OVER title with glitch effect
-                    SlideTransition(
-                      position: _titleSlide,
-                      child: AnimatedBuilder(
-                        animation: _glitchAnim,
-                        builder: (context, _) {
-                          return _GlitchText(
-                            text: 'GAME OVER',
-                            glitch: _glitchAnim.value,
-                          );
-                        },
-                      ),
-                    ),
-
-                    const Gap(8),
-
-                    // Subtitle line
-                    SlideTransition(
-                      position: _titleSlide,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          _DotDivider(),
-                          const Gap(10),
-                          Text(
-                            'BETTER LUCK NEXT TIME',
-                            style: TextStyle(
-                              fontSize: 11,
-                              letterSpacing: 4,
-                              color: Colors.white.withValues(alpha: 0.35),
-                              fontFamily: 'monospace',
-                              decoration: TextDecoration.none,
-                            ),
-                          ),
-                          const Gap(10),
-                          _DotDivider(),
-                        ],
-                      ),
-                    ),
-
-                    const Gap(36),
-
-                    if (_isNewBest) ...[
-                      const Gap(16),
-                      SlideTransition(
-                        position: _cardSlide,
-                        child: _NewBestBadge(),
-                      ),
-                    ],
-
-                    const Gap(36),
-
-                    // Score cards
-                    SlideTransition(
-                      position: _cardSlide,
-                      child: ScaleTransition(
-                        scale: _scaleAnim,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Column(
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                child: _ScoreCard(
-                                  label: 'BEST',
-                                  value: widget.bestScore,
-                                  accent: const Color(0xFFFF6B2F),
-                                  highlight: _isNewBest,
-                                ),
-                              ),
-                              const Gap(12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: _ScoreCard(
-                                  label: 'SCORE',
-                                  value: widget.score,
-                                  accent: const Color(0xFF7B2FFF),
-                                  highlight: false,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // if (_isNewBest) ...[
-                    //   const Gap(16),
-                    //   SlideTransition(
-                    //     position: _cardSlide,
-                    //     child: _NewBestBadge(),
-                    //   ),
-                    // ],
-                    const Gap(40),
-
-                    // Restart button
-                    SlideTransition(
-                      position: _cardSlide,
-                      child: ZoBreathingBorder(
-                        borderWidth: 2.0,
-                        borderRadius: BorderRadius.circular(14),
-                        colors: const [
-                          Color(0xFF7B2FFF),
-                          Color(0xFFFF2FD4),
-                          Color(0xFFFF6B2F),
-                          Color(0xFF2FFFFF),
-                        ],
-                        child: _RestartButton(onTap: widget.onRestart),
-                      ),
-                    ),
-
-                    const Gap(20),
-
-                    SlideTransition(
-                      position: _cardSlide,
-                      child: ZoBreathingBorder(
-                        borderWidth: 2.0,
-                        borderRadius: BorderRadius.circular(14),
-                        colors: const [
-                          Color(0xFF7B2FFF),
-                          Color(0xFFFF2FD4),
-                          Color(0xFFFF6B2F),
-                          Color(0xFF2FFFFF),
-                        ],
-                        child: _HomeButton(),
-                      ),
-                    ),
-
-                    const Gap(20),
-
-                    // Hint text
-                    SlideTransition(
-                      position: _cardSlide,
-                      child: Text(
-                        'tap to play again',
+                // Subtitle line
+                SlideTransition(
+                  position: _titleSlide,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _DotDivider(),
+                      const Gap(10),
+                      Text(
+                        'BETTER LUCK NEXT TIME',
                         style: TextStyle(
                           fontSize: 11,
-                          letterSpacing: 2,
-                          color: Colors.white.withValues(alpha: 0.2),
-                          fontFamily: 'monospace',
+                          letterSpacing: 4,
+                          color: Colors.black.withValues(alpha: 0.4),
+                          fontFamily: 'sans-serif',
                           decoration: TextDecoration.none,
                         ),
                       ),
-                    ),
-
-                    const Gap(20),
-                  ],
+                      const Gap(10),
+                      _DotDivider(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+
+                const Gap(36),
+
+                if (_isNewBest) ...[
+                  const Gap(16),
+                  SlideTransition(
+                    position: _cardSlide,
+                    child: _NewBestBadge(),
+                  ),
+                ],
+
+                const Gap(36),
+
+                // Score cards
+                SlideTransition(
+                  position: _cardSlide,
+                  child: ScaleTransition(
+                    scale: _scaleAnim,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: _ScoreCard(
+                              label: 'BEST',
+                              value: widget.bestScore,
+                              accent: const Color(0xFFF59E0B),
+                              highlight: _isNewBest,
+                            ),
+                          ),
+                          const Gap(12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: _ScoreCard(
+                              label: 'SCORE',
+                              value: widget.score,
+                              accent: const Color(0xFF3B82F6),
+                              highlight: false,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const Gap(40),
+
+                // Restart button
+                SlideTransition(
+                  position: _cardSlide,
+                  child: _RestartButton(onTap: widget.onRestart),
+                ),
+
+                const Gap(20),
+
+                SlideTransition(
+                  position: _cardSlide,
+                  child: _HomeButton(),
+                ),
+
+                const Gap(20),
+
+                // Hint text
+                SlideTransition(
+                  position: _cardSlide,
+                  child: Text(
+                    'tap to play again',
+                    style: TextStyle(
+                      fontSize: 11,
+                      letterSpacing: 2,
+                      color: Colors.black.withValues(alpha: 0.3),
+                      fontFamily: 'sans-serif',
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ),
+
+                const Gap(20),
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _GlitchText extends StatelessWidget {
-  const _GlitchText({required this.text, required this.glitch});
-
-  final String text;
-  final double glitch;
-
-  @override
-  Widget build(BuildContext context) {
-    final offset = (glitch * 3 - 1.5).clamp(-3.0, 3.0);
-    return Stack(
-      children: [
-        // Red channel offset
-        Transform.translate(
-          offset: Offset(offset, 0),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 52,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 6,
-              color: const Color(0xFFFF2060).withValues(alpha: 0.6),
-              decoration: TextDecoration.none,
-              fontFamily: 'monospace',
-            ),
-          ),
-        ),
-        // Cyan channel offset
-        Transform.translate(
-          offset: Offset(-offset, 0),
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 52,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 6,
-              color: const Color(0xFF00FFFF).withValues(alpha: 0.4),
-              decoration: TextDecoration.none,
-              fontFamily: 'monospace',
-            ),
-          ),
-        ),
-        // Main white text
-        Text(
-          text,
-          style: const TextStyle(
-            fontSize: 52,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 6,
-            color: Colors.white,
-            decoration: TextDecoration.none,
-            fontFamily: 'monospace',
-          ),
-        ),
-      ],
     );
   }
 }
@@ -383,23 +250,19 @@ class _ScoreCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: highlight
-              ? accent.withValues(alpha: 0.7)
-              : Colors.white.withValues(alpha: 0.08),
-          width: highlight ? 1.5 : 1,
+          color: highlight ? accent : const Color(0xFFE5E7EB),
+          width: highlight ? 2 : 1,
         ),
-        boxShadow: highlight
-            ? [
-                BoxShadow(
-                  color: accent.withValues(alpha: 0.25),
-                  blurRadius: 24,
-                  spreadRadius: 2,
-                ),
-              ]
-            : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -409,9 +272,9 @@ class _ScoreCard extends StatelessWidget {
               fontSize: 10,
               letterSpacing: 3,
               fontWeight: FontWeight.w600,
-              color: accent.withValues(alpha: 0.8),
+              color: highlight ? accent : const Color(0xFF6B7280),
               decoration: TextDecoration.none,
-              fontFamily: 'monospace',
+              fontFamily: 'sans-serif',
             ),
           ),
           const Gap(8),
@@ -420,9 +283,9 @@ class _ScoreCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: Color(0xFF111827),
               decoration: TextDecoration.none,
-              fontFamily: 'monospace',
+              fontFamily: 'sans-serif',
             ),
           ),
         ],
@@ -433,89 +296,50 @@ class _ScoreCard extends StatelessWidget {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _NewBestBadge extends StatefulWidget {
-  @override
-  State<_NewBestBadge> createState() => _NewBestBadgeState();
-}
-
-class _NewBestBadgeState extends State<_NewBestBadge>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
+class _NewBestBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _ctrl,
-      builder: (context, _) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                const Color(0xFFFF6B2F).withValues(alpha: 0.15 + _ctrl.value * 0.1),
-                const Color(0xFFFFD700).withValues(alpha: 0.15 + _ctrl.value * 0.1),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Color.lerp(
-                const Color(0xFFFF6B2F),
-                const Color(0xFFFFD700),
-                _ctrl.value,
-              )!.withValues(alpha: 0.6),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF3C7),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF59E0B)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            '✦',
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFFF59E0B),
+              decoration: TextDecoration.none,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                '✦',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFFFFD700),
-                  decoration: TextDecoration.none,
-                ),
-              ),
-              const Gap(6),
-              const Text(
-                'NEW BEST',
-                style: TextStyle(
-                  fontSize: 11,
-                  letterSpacing: 3,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFFFFD700),
-                  decoration: TextDecoration.none,
-                  fontFamily: 'monospace',
-                ),
-              ),
-              const Gap(6),
-              const Text(
-                '✦',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFFFFD700),
-                  decoration: TextDecoration.none,
-                ),
-              ),
-            ],
+          const Gap(6),
+          const Text(
+            'NEW BEST',
+            style: TextStyle(
+              fontSize: 11,
+              letterSpacing: 3,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFF59E0B),
+              decoration: TextDecoration.none,
+              fontFamily: 'sans-serif',
+            ),
           ),
-        );
-      },
+          const Gap(6),
+          const Text(
+            '✦',
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFFF59E0B),
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -568,11 +392,18 @@ class _RestartButtonState extends State<_RestartButton>
       child: ScaleTransition(
         scale: _scale,
         child: Container(
-          width: 180,
-          height: 52,
+          width: 200,
+          height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFF0D0118),
-            borderRadius: BorderRadius.circular(12),
+            color: const Color(0xFF3B82F6),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -580,18 +411,18 @@ class _RestartButtonState extends State<_RestartButton>
               const Icon(
                 Icons.play_arrow_rounded,
                 color: Colors.white,
-                size: 22,
+                size: 24,
               ),
               const Gap(8),
               const Text(
                 'PLAY AGAIN',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,
                   color: Colors.white,
                   decoration: TextDecoration.none,
-                  fontFamily: 'monospace',
+                  fontFamily: 'sans-serif',
                 ),
               ),
             ],
@@ -644,26 +475,34 @@ class _HomeButtonState extends State<_HomeButton>
       child: ScaleTransition(
         scale: _scale,
         child: Container(
-          width: 180,
-          height: 52,
+          width: 200,
+          height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFF0D0118),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.home_rounded, color: Colors.white, size: 22),
+              const Icon(Icons.home_rounded, color: Color(0xFF111827), size: 24),
               const Gap(8),
               const Text(
                 'HOME',
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 2,
-                  color: Colors.white,
+                  color: Color(0xFF111827),
                   decoration: TextDecoration.none,
-                  fontFamily: 'monospace',
+                  fontFamily: 'sans-serif',
                 ),
               ),
             ],
@@ -683,87 +522,9 @@ class _DotDivider extends StatelessWidget {
       width: 4,
       height: 4,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: Colors.black.withValues(alpha: 0.2),
         shape: BoxShape.circle,
       ),
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.03)
-      ..strokeWidth = 1;
-
-    const step = 40.0;
-
-    for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_) => false;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ParticlePainter extends CustomPainter {
-  final double progress;
-  static final _rng = Random(42);
-
-  static final List<_Particle> _particles = List.generate(20, (i) {
-    return _Particle(
-      x: _rng.nextDouble(),
-      y: _rng.nextDouble(),
-      speed: 0.05 + _rng.nextDouble() * 0.08,
-      size: 1.5 + _rng.nextDouble() * 2.5,
-      phase: _rng.nextDouble(),
-    );
-  });
-
-  _ParticlePainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final p in _particles) {
-      final t = (progress + p.phase) % 1.0;
-      final y = (p.y - t * p.speed * 3) % 1.0;
-      final opacity = (sin(t * pi) * 0.5).clamp(0.0, 0.5);
-
-      final paint = Paint()
-        ..color = const Color(0xFF7B2FFF).withValues(alpha: opacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-
-      canvas.drawCircle(
-        Offset(p.x * size.width, y * size.height),
-        p.size,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ParticlePainter old) => old.progress != progress;
-}
-
-class _Particle {
-  final double x, y, speed, size, phase;
-  const _Particle({
-    required this.x,
-    required this.y,
-    required this.speed,
-    required this.size,
-    required this.phase,
-  });
-}
-
-
-

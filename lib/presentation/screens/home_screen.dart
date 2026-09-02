@@ -7,6 +7,7 @@ import 'package:block/presentation/view_models/online_match_view_model.dart';
 import 'package:block/presentation/widgets/display.dart';
 import 'package:block/presentation/widgets/draggable_block.dart';
 import 'package:block/presentation/widgets/game_over.dart';
+import 'package:block/presentation/widgets/skin_selector_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -155,6 +156,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
             if (gameState.isGameOver && !widget.isOnline) _buildGameOverOverlay(gameState),
+            // ── Skin selector button (top-right) ──
+            Positioned(
+              top: 8,
+              right: 12,
+              child: _SkinButton(
+                onTap: () => showSkinSelectorSheet(context),
+              ),
+            ),
           ],
         ),
       ),
@@ -189,17 +198,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Text(
               'ONLINE ROOM ${widget.roomCode ?? '-'}',
               style: GoogleFonts.itim(
-                                color: Color(0xFFFF6B2F),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 2.2,
-                              ),
-              // style: const TextStyle(
-              //   color: Color(0xFFFF6B2F),
-              //   fontSize: 11,
-              //   fontWeight: FontWeight.w800,
-              //   letterSpacing: 2.2,
-              // ),
+                color: const Color(0xFFFF6B2F),
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2.2,
+              ),
             ),
           ),
           const Gap(6),
@@ -212,14 +215,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ? 'Your score $currentScore • Leader: ${leader.name} $leaderScore'
                 : '5-minute online battle is active.',
             style: GoogleFonts.itim(
-                                color: Colors.black.withValues(alpha: 0.45),
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-            // style: TextStyle(
-            //   color: Colors.black.withValues(alpha: 0.45),
-            //   fontSize: 11,
-            // ),
+              color: Colors.black.withValues(alpha: 0.45),
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -243,19 +242,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Text(
                 gameState.timeString,
                 style: GoogleFonts.itim(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.redAccent,
-                                // fontFamily: 'monospace',
-                                decoration: TextDecoration.none,
-                              ),
-                // style: const TextStyle(
-                //   fontSize: 36,
-                //   fontWeight: FontWeight.w900,
-                //   color: Colors.redAccent,
-                //   fontFamily: 'monospace',
-                //   decoration: TextDecoration.none,
-                // ),
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.redAccent,
+                  decoration: TextDecoration.none,
+                ),
               ),
             ],
           ),
@@ -267,17 +258,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             AnimatedDigitWidget(
               value: gameState.score,
               textStyle: GoogleFonts.itim(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                                decoration: TextDecoration.none,
-                              ),
-              // textStyle: const TextStyle(
-              //   fontSize: 32,
-              //   fontWeight: FontWeight.bold,
-              //   decoration: TextDecoration.none,
-              //   color: Colors.black,
-              // ),
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+                decoration: TextDecoration.none,
+              ),
             ),
           ],
         ),
@@ -294,18 +279,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Text(
               'BEST: ',
               style: GoogleFonts.itim(
-                                // color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black54,
-                                decoration: TextDecoration.none,
-                              ),
-              // style: TextStyle(
-              //   fontSize: 16,
-              //   fontWeight: FontWeight.bold,
-              //   color: Colors.black54,
-              //   decoration: TextDecoration.none,
-              // ),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+                decoration: TextDecoration.none,
+              ),
             ),
             AnimatedDigitWidget(
               value: gameState.score >
@@ -317,17 +295,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ? gameState.highScoreTimer
                         : gameState.highScore),
               textStyle: GoogleFonts.itim(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black54,
-                                decoration: TextDecoration.none,
-                              ),
-              // textStyle: const TextStyle(
-              //   fontSize: 16,
-              //   fontWeight: FontWeight.bold,
-              //   color: Colors.black54,
-              //   decoration: TextDecoration.none,
-              // ),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black54,
+                decoration: TextDecoration.none,
+              ),
             ),
           ],
         ),
@@ -377,35 +349,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Text(
                 title,
                 style: GoogleFonts.itim(
-                                fontSize: 42,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.red,
-                                decoration: TextDecoration.none,
-                              ),
-                // style: TextStyle(
-                //   fontSize: 42,
-                //   fontWeight: FontWeight.bold,
-                //   color: Colors.red,
-                //   decoration: TextDecoration.none,
-                //   fontFamily: 'monospace',
-                // ),
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                  decoration: TextDecoration.none,
+                ),
               ),
               if (subtitle != null) ...[
                 Gap(12),
                 Text(
                   subtitle,
                   style: GoogleFonts.itim(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                decoration: TextDecoration.none,
-                              ),
-                  // style: TextStyle(
-                  //   fontSize: 14,
-                  //   fontWeight: FontWeight.w500,
-                  //   color: Colors.white,
-                  //   decoration: TextDecoration.none,
-                  // ),
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.none,
+                  ),
                 ),
                 Gap(20),
                 FilledButton(
@@ -415,6 +374,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// _SkinButton — ปุ่มเปลี่ยนสกินมุมบนขวา
+// =============================================================================
+class _SkinButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SkinButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white,
+          border: Border.all(
+            color: const Color(0xFFE5E7EB),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.palette_rounded,
+          color: Color(0xFF6B7280),
+          size: 20,
         ),
       ),
     );
