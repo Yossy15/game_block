@@ -124,8 +124,6 @@ class GameViewModel extends _$GameViewModel {
   }
 
   int placeBlock(Block block, int startRow, int startCol, int slotIndex) {
-    ref.read(soundManagerProvider).playPlace();
-
     final grid = _cloneGrid(state.grid);
     final blockSlots = [...state.blockSlots];
     var placedCells = 0;
@@ -144,6 +142,10 @@ class GameViewModel extends _$GameViewModel {
     var workingState = state.copyWith(grid: grid, blockSlots: blockSlots);
     final lineResult = _clearLines(workingState);
     workingState = lineResult.state;
+
+    if (lineResult.linesCleared == 0) {
+      ref.read(soundManagerProvider).playPlace();
+    }
 
     var turnScore = placedCells;
     final popupCombo = lineResult.linesCleared > 0 ? workingState.comboCount : 0;
@@ -291,7 +293,7 @@ class GameViewModel extends _$GameViewModel {
       clearingCells: [...currentState.clearingCells, ...cellsToClear],
     );
 
-    Future.delayed(const Duration(milliseconds: 400), () {
+    Future.delayed(const Duration(milliseconds: 600), () {
       state = state.copyWith(
         clearingCells: state.clearingCells.where((cell) {
           return !cellsToClear.any(

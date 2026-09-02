@@ -30,10 +30,10 @@ class SoundManager {
   Future<void> playPlace() async {
     try {
       await _placePlayer.stop(); // Stop current sound if it's still playing
+      await _placePlayer.setPlaybackRate(1.3); // Higher pitch, faster sound for new feel
       await _placePlayer.play(
         AssetSource(_toAudioAssetPath(Assets.sounds.place)),
-        // volume: 0.5,
-        volume: 0.0,
+        volume: 0.6,
       );
     } catch (e) {
       debugPrint('Error playing place sound: $e');
@@ -44,10 +44,10 @@ class SoundManager {
   Future<void> playClear() async {
     try {
       await _clearPlayer.stop();
+      // ใช้ไฟล์เสียงที่ถูกสร้างขึ้นมาใหม่ (clear_new.wav) แทนการเล่นซ้ำๆ
       await _clearPlayer.play(
-        AssetSource(_toAudioAssetPath(Assets.sounds.clear)),
-        // volume: 0.7,
-        volume: 0.0,
+        AssetSource('sounds/clear_new.wav'),
+        volume: 1.0,
       );
     } catch (e) {
       debugPrint('Error playing clear sound: $e');

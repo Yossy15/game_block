@@ -13,7 +13,6 @@ class ModeScreen extends StatefulWidget {
 }
 
 class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
-  late AnimationController _particleController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
 
@@ -25,11 +24,6 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-
-    _particleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..repeat();
 
     _fadeController = AnimationController(
       vsync: this,
@@ -67,7 +61,6 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _particleController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
     super.dispose();
@@ -92,34 +85,15 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
         }
       },
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: FadeTransition(
           opacity: _fadeAnim,
           child: Container(
-            decoration: const BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment(0, -0.3),
-                radius: 1.4,
-                colors: [
-                  Color(0xFF1A0A2E),
-                  Color(0xFF0D0118),
-                  Color(0xFF050008),
-                ],
-              ),
-            ),
+            color: const Color(0xFFF9FAFB), // Minimal light background
             child: Stack(
               children: [
-                // Grid
+                // Minimal grid background
                 Positioned.fill(child: CustomPaint(painter: _GridPainter())),
-
-                // Particles
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _particleController,
-                    builder: (context, _) => CustomPaint(
-                      painter: _ParticlePainter(_particleController.value),
-                    ),
-                  ),
-                ),
 
                 // Content
                 SafeArea(
@@ -137,8 +111,8 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
                               style: TextStyle(
                                 fontSize: 11,
                                 letterSpacing: 5,
-                                color: Colors.white.withValues(alpha: 0.3),
-                                fontFamily: 'monospace',
+                                color: Colors.black.withValues(alpha: 0.4),
+                                fontFamily: 'sans-serif',
                                 decoration: TextDecoration.none,
                               ),
                             ),
@@ -148,23 +122,18 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
                               style: TextStyle(
                                 fontSize: 64,
                                 fontWeight: FontWeight.w900,
-                                letterSpacing: 10,
-                                color: Colors.white,
+                                letterSpacing: 8,
+                                color: Color(0xFF111827),
                                 decoration: TextDecoration.none,
-                                fontFamily: 'monospace',
+                                fontFamily: 'sans-serif',
                               ),
                             ),
                             const Gap(6),
                             Container(
                               width: 64,
-                              height: 2,
+                              height: 3,
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF7B2FFF),
-                                    Color(0xFFFF6B2F),
-                                  ],
-                                ),
+                                color: const Color(0xFF3B82F6),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -187,10 +156,9 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
                                     child: _ModeCard(
                                       label: 'CLASSIC',
                                       badge: 'FREE PLAY',
-                                      description:
-                                          'No time limit\nPlace & clear',
+                                      description: 'No time limit\nPlace & clear',
                                       icon: Icons.grid_4x4_rounded,
-                                      accentColor: const Color(0xFF7B2FFF),
+                                      accentColor: const Color(0xFF3B82F6),
                                       onTap: () => _goToHome(
                                         context,
                                         isTimerMode: false,
@@ -205,12 +173,10 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
                                     child: _ModeCard(
                                       label: 'TIMER',
                                       badge: 'CHALLENGE',
-                                      description:
-                                          'Race the clock\nBeat your best',
+                                      description: 'Race the clock\nBeat your best',
                                       icon: Icons.timer_rounded,
-                                      accentColor: const Color(0xFFFF6B2F),
-                                      onTap: () =>
-                                          _goToHome(context, isTimerMode: true),
+                                      accentColor: const Color(0xFFEF4444),
+                                      onTap: () => _goToHome(context, isTimerMode: true),
                                     ),
                                   ),
                                 ),
@@ -219,30 +185,15 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
                             const Gap(16),
                             Row(
                               children: [
-                                // Expanded(
-                                //   child: SlideTransition(
-                                //     position: _card1Slide,
-                                //     child: _ModeCard(
-                                //       label: 'DUO\n(Online)',
-                                //       badge: 'FREE PLAY',
-                                //       description: 'No time limit\nPlace & clear',
-                                //       icon: Icons.grid_4x4_rounded,
-                                //       accentColor: const Color(0xFF7B2FFF),
-                                //       onTap: () {},
-                                //     ),
-                                //   ),
-                                // ),
-                                // const Gap(16),
                                 Expanded(
                                   child: SlideTransition(
                                     position: _card2Slide,
                                     child: _ModeCard(
                                       label: 'BATTER\n(Online)',
                                       badge: 'CHALLENGE',
-                                      description:
-                                          'Create room\nJoin by code',
+                                      description: 'Create room\nJoin by code',
                                       icon: Icons.wifi_tethering_rounded,
-                                      accentColor: const Color(0xFFFF6B2F),
+                                      accentColor: const Color(0xFF8B5CF6),
                                       onTap: () => context.pushNamed('online-room'),
                                     ),
                                   ),
@@ -263,8 +214,8 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
                           style: TextStyle(
                             fontSize: 11,
                             letterSpacing: 2,
-                            color: Colors.white.withValues(alpha: 0.2),
-                            fontFamily: 'monospace',
+                            color: Colors.black.withValues(alpha: 0.3),
+                            fontFamily: 'sans-serif',
                             decoration: TextDecoration.none,
                           ),
                         ),
@@ -284,29 +235,29 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
     return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A0A2E),
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          side: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
         title: const Text(
           'Exit Game',
           style: TextStyle(
-            color: Colors.white,
-            fontFamily: 'monospace',
+            color: Colors.black,
+            fontFamily: 'sans-serif',
             fontWeight: FontWeight.bold,
           ),
         ),
         content: const Text(
           'Are you sure you want to exit the app?',
-          style: TextStyle(color: Colors.white70, fontFamily: 'monospace'),
+          style: TextStyle(color: Colors.black54, fontFamily: 'sans-serif'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text(
               'CANCEL',
-              style: TextStyle(color: Colors.white30, fontFamily: 'monospace'),
+              style: TextStyle(color: Colors.black38, fontFamily: 'sans-serif'),
             ),
           ),
           TextButton(
@@ -314,8 +265,8 @@ class _ModeScreenState extends State<ModeScreen> with TickerProviderStateMixin {
             child: const Text(
               'EXIT',
               style: TextStyle(
-                color: Color(0xFFFF6B2F),
-                fontFamily: 'monospace',
+                color: Color(0xFFEF4444),
+                fontFamily: 'sans-serif',
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -394,25 +345,30 @@ class _ModeCardState extends State<_ModeCard>
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
             decoration: BoxDecoration(
-              color: _hovered
-                  ? widget.accentColor.withValues(alpha: 0.12)
-                  : Colors.white.withValues(alpha: 0.04),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: _hovered
                     ? widget.accentColor.withValues(alpha: 0.8)
-                    : widget.accentColor.withValues(alpha: 0.6), // เพิ่มความสว่างนีออนแม้ไม่ hover
+                    : const Color(0xFFE5E7EB),
                 width: 1.5,
               ),
               boxShadow: _hovered
                   ? [
                       BoxShadow(
-                        color: widget.accentColor.withValues(alpha: 0.18),
-                        blurRadius: 30,
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
                         spreadRadius: 2,
+                        offset: const Offset(0, 4),
                       ),
                     ]
-                  : null,
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -425,10 +381,10 @@ class _ModeCardState extends State<_ModeCard>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: widget.accentColor.withValues(alpha: 0.15),
+                    color: widget.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: widget.accentColor.withValues(alpha: _hovered ? 0.5 : 0.25),
+                      color: widget.accentColor.withValues(alpha: _hovered ? 0.3 : 0.1),
                     ),
                   ),
                   child: Text(
@@ -437,8 +393,8 @@ class _ModeCardState extends State<_ModeCard>
                       fontSize: 9,
                       letterSpacing: 2,
                       fontWeight: FontWeight.w700,
-                      color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.75),
-                      fontFamily: 'monospace',
+                      color: widget.accentColor,
+                      fontFamily: 'sans-serif',
                       decoration: TextDecoration.none,
                     ),
                   ),
@@ -453,24 +409,19 @@ class _ModeCardState extends State<_ModeCard>
                   height: 60,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: widget.accentColor.withValues(alpha: _hovered ? 0.3 : 0.12),
+                    color: _hovered
+                        ? widget.accentColor.withValues(alpha: 0.1)
+                        : const Color(0xFFF3F4F6),
                     border: Border.all(
-                      color: widget.accentColor.withValues(alpha: _hovered ? 0.9 : 0.7),
-                      width: 1.8,
+                      color: _hovered
+                          ? widget.accentColor.withValues(alpha: 0.5)
+                          : const Color(0xFFE5E7EB),
+                      width: 1.5,
                     ),
-                    boxShadow: _hovered
-                        ? [
-                            BoxShadow(
-                              color: widget.accentColor.withValues(alpha: 0.3),
-                              blurRadius: 20,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : null,
                   ),
                   child: Icon(
                     widget.icon,
-                    color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.8),
+                    color: _hovered ? widget.accentColor : const Color(0xFF9CA3AF),
                     size: 26,
                   ),
                 ),
@@ -483,11 +434,11 @@ class _ModeCardState extends State<_ModeCard>
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 4,
-                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                    color: Color(0xFF1F2937),
                     decoration: TextDecoration.none,
-                    fontFamily: 'monospace',
+                    fontFamily: 'sans-serif',
                   ),
                 ),
 
@@ -497,13 +448,12 @@ class _ModeCardState extends State<_ModeCard>
                 Text(
                   widget.description,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
-                    height: 1.7,
-                    letterSpacing: 0.5,
-                    color: Colors.white.withValues(alpha: 0.38),
+                    height: 1.5,
+                    color: Color(0xFF6B7280),
                     decoration: TextDecoration.none,
-                    fontFamily: 'monospace',
+                    fontFamily: 'sans-serif',
                   ),
                 ),
 
@@ -516,7 +466,7 @@ class _ModeCardState extends State<_ModeCard>
                   children: [
                     Icon(
                       Icons.play_arrow_rounded,
-                      color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.6),
+                      color: widget.accentColor,
                       size: 18,
                     ),
                     const Gap(4),
@@ -524,11 +474,11 @@ class _ModeCardState extends State<_ModeCard>
                       'START',
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 3,
-                        color: widget.accentColor.withValues(alpha: _hovered ? 1.0 : 0.6),
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                        color: widget.accentColor,
                         decoration: TextDecoration.none,
-                        fontFamily: 'monospace',
+                        fontFamily: 'sans-serif',
                       ),
                     ),
                   ],
@@ -542,13 +492,11 @@ class _ModeCardState extends State<_ModeCard>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.03)
+      ..color = Colors.black.withValues(alpha: 0.03)
       ..strokeWidth = 1;
 
     const step = 36.0;
@@ -564,62 +512,3 @@ class _GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(_) => false;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ParticlePainter extends CustomPainter {
-  final double progress;
-  static final _rng = Random(42);
-  static final List<_Particle> _particles = List.generate(28, (i) {
-    return _Particle(
-      x: _rng.nextDouble(),
-      y: _rng.nextDouble(),
-      speed: 0.03 + _rng.nextDouble() * 0.06,
-      size: 1.5 + _rng.nextDouble() * 2.5,
-      phase: _rng.nextDouble(),
-      isOrange: i % 3 == 0,
-    );
-  });
-
-  _ParticlePainter(this.progress);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final p in _particles) {
-      final t = (progress + p.phase) % 1.0;
-      final y = ((p.y - t * p.speed * 3) % 1.0 + 1.0) % 1.0;
-      final opacity = (sin(t * pi) * 0.5).clamp(0.0, 0.5);
-
-      final paint = Paint()
-        ..color = p.isOrange
-            ? const Color(0xFFFF6B2F).withValues(alpha: opacity)
-            : const Color(0xFF7B2FFF).withValues(alpha: opacity)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-
-      canvas.drawCircle(
-        Offset(p.x * size.width, y * size.height),
-        p.size,
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_ParticlePainter old) => old.progress != progress;
-}
-
-class _Particle {
-  final double x, y, speed, size, phase;
-  final bool isOrange;
-  const _Particle({
-    required this.x,
-    required this.y,
-    required this.speed,
-    required this.size,
-    required this.phase,
-    required this.isOrange,
-  });
-}
-
-
-

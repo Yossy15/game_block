@@ -8,4 +8,9 @@ class SharedPreferencesService {
   int? getInt(String key) => _preferences.getInt(key);
 
   Future<bool> setInt(String key, int value) => _preferences.setInt(key, value);
+
+  String? getString(String key) => _preferences.getString(key);
+
+  Future<bool> setString(String key, String value) =>
+      _preferences.setString(key, value);
 }
